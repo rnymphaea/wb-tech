@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/joho/godotenv"
 )
 
 type DatabaseConfig struct {
@@ -16,23 +15,17 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	Database DatabaseConfig `envPrefix:DB"`
+	Database DatabaseConfig
 }
 
 func LoadConfig() (*Config, error) {
-	// TODO: delete loading .env here
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
-	
 	var dbcfg DatabaseConfig
 
 	if err := env.Parse(&dbcfg); err != nil {
 		return nil, err
 	}
 	
-	return &Config{Database: dbcfg}, err
+	return &Config{Database: dbcfg}, nil
 }
 
 func (config *Config) GetDatabaseURL() string {

@@ -21,6 +21,25 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: orders-app
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
 
 volumes:
   postgres_data:  

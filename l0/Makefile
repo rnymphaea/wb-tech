@@ -1,2 +1,2 @@
 all:
-	go run cmd/main.go
+	docker-compose build && docker-compose up
