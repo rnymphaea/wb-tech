@@ -3,37 +3,36 @@ package config
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
 type DatabaseConfig struct {
-	Host         string `mapstructure:"host"`
-	Port         int    `mapstructure:"port"`
-	Username     string `mapstructure:"user"`
-	Password     string `mapstructure:"password"`
-	DatabaseName string `mapstructure:"dbname"`
+	Host         string `env:"DB_HOST"`
+	Port         int    `env:"DB_PORT"`
+	Username     string `env:"DB_USER"`
+	Password     string `env:"DB_PASSWORD"`
+	DatabaseName string `env:"DB_NAME"`
 }
 
 type Config struct {
-	Database DatabaseConfig `mapstructure:"database"`
+	Database DatabaseConfig `envPrefix:DB"`
 }
 
 func LoadConfig() (*Config, error) {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	viper.SetConfigType("toml")
-
-	var config Config
-
-	if err := viper.ReadInConfig(); err != nil {
-		return &config, fmt.Errorf("error reading config file: %v", err)
+	// TODO: delete loading .env here
+	err := godotenv.Load()
+	if err != nil {
+		return nil, err
 	}
+	
+	var dbcfg DatabaseConfig
 
-	if err := viper.Unmarshal(&config); err != nil {
-		return &config, fmt.Errorf("unable to decode into struct: %v", err)
+	if err := env.Parse(&dbcfg); err != nil {
+		return nil, err
 	}
-
-	return &config, nil
+	
+	return &Config{Database: dbcfg}, err
 }
 
 func (config *Config) GetDatabaseURL() string {
@@ -44,4 +43,3 @@ func (config *Config) GetDatabaseURL() string {
 		config.Database.Port,
 		config.Database.DatabaseName)
 }
-
