@@ -1,12 +1,9 @@
 package models
 
-package models
-
 import (
 	"time"
 )
 
-// Order - основная модель заказа
 type Order struct {
 	UID               string    `json:"uid"`
 	TrackNumber       string    `json:"track_number"`
@@ -19,9 +16,9 @@ type Order struct {
 	SmID              int       `json:"sm_id"`
 	DateCreated       time.Time `json:"date_created"`
 	OofShard          string    `json:"oof_shard,omitempty"`
-	Delivery Delivery   `json:"delivery"`
-	Payment  Payment    `json:"payment"`
-	Items    []Item     `json:"items"`
+	Delivery          Delivery  `json:"delivery"`
+	Payment           Payment   `json:"payment"`
+	Items             []Item    `json:"items"`
 }
 
 type Delivery struct {

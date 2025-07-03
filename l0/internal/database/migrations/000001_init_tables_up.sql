@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS payments (
   delivery_cost INTEGER NOT NULL,
   goods_total INTEGER NOT NULL,
   custom_fee INTEGER,
-  FOREIGN KEY (order_uid) REFERENCES ordes(uid) ON DELETE CASCADE
+  FOREIGN KEY (order_uid) REFERENCES orders(uid) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS items (

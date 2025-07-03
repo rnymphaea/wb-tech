@@ -6,6 +6,7 @@ import (
 
 	"wb-tech-l0/internal/config"
 	"wb-tech-l0/internal/router"
+	"wb-tech-l0/internal/database/postgres"
 )
 
 func main() {
@@ -17,8 +18,9 @@ func main() {
 	log.Println("Config loaded")
 	databaseURL := cfg.GetDatabaseURL()
 	log.Printf("DB URL: %s", databaseURL)
-
-	mux := router.NewRouter()
+	
+	storage, _ := postgres.New(databaseURL)
+	mux := router.NewRouter(storage)
 	server := &http.Server{
 		Addr: ":8080",
 		Handler: mux,
