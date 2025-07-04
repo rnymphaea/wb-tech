@@ -21,6 +21,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: orders-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   app:
     build: 
       context: .
@@ -33,6 +47,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "8080"]
@@ -42,4 +58,5 @@ services:
 
 
 volumes:
-  postgres_data:  
+  postgres_data: 
+  redis_data:

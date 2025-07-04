@@ -8,7 +8,7 @@ import (
 	"wb-tech-l0/internal/database/models"
 )
 
-func (s *Storage) GetOrderByUID(ctx context.Context, uid string) (*models.Order, error) {
+func (pgrepo *PostgresRepo) GetOrderByUID(ctx context.Context, uid string) (*models.Order, error) {
 	orderQuery := `SELECT 
 			o.uid, o.track_number, o.entry, o.locale, o.internal_signature, o.customer_id, 
 			o.delivery_service, o.shardkey, o.sm_id, o.date_created, o.oof_shard,
@@ -22,7 +22,7 @@ func (s *Storage) GetOrderByUID(ctx context.Context, uid string) (*models.Order,
 	`
 
 	order := models.Order{}
-	err := s.pool.QueryRow(ctx, orderQuery, uid).Scan(
+	err := pgrepo.pool.QueryRow(ctx, orderQuery, uid).Scan(
 		&order.UID, &order.TrackNumber, &order.Entry, &order.Locale, &order.InternalSignature, 
 		&order.CustomerID, &order.DeliveryService, &order.Shardkey, &order.SmID, &order.DateCreated, 
 		&order.OofShard,
@@ -44,7 +44,7 @@ func (s *Storage) GetOrderByUID(ctx context.Context, uid string) (*models.Order,
 		WHERE order_uid = $1
 	`
 
-	rows, err := s.pool.Query(ctx, itemsQuery, uid)
+	rows, err := pgrepo.pool.Query(ctx, itemsQuery, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -69,33 +69,33 @@ func (s *Storage) GetOrderByUID(ctx context.Context, uid string) (*models.Order,
 	return &order, nil
 }
 
-func (s *Storage) SaveOrder(ctx context.Context, order *models.Order) error {
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+func (pgrepo *PostgresRepo) SaveOrder(ctx context.Context, order *models.Order) error {
+	tx, err := pgrepo.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	if err := s.saveOrder(ctx, tx, order); err != nil {
+	if err := pgrepo.saveOrder(ctx, tx, order); err != nil {
 		return err
 	}
 
-	if err := s.saveDelivery(ctx, tx, order); err != nil {
+	if err := pgrepo.saveDelivery(ctx, tx, order); err != nil {
 		return err
 	}
 
-	if err := s.savePayment(ctx, tx, order); err != nil {
+	if err := pgrepo.savePayment(ctx, tx, order); err != nil {
 		return err
 	}
 
-	if err := s.saveItems(ctx, tx, order); err != nil {
+	if err := pgrepo.saveItems(ctx, tx, order); err != nil {
 		return err
 	}
 
 	return tx.Commit(ctx)
 }
 
-func (s *Storage) saveOrder(ctx context.Context, tx pgx.Tx, order *models.Order) error {
+func (pgrepo *PostgresRepo) saveOrder(ctx context.Context, tx pgx.Tx, order *models.Order) error {
 	query := `
 		INSERT INTO orders (
 			uid, track_number, entry, locale, internal_signature, customer_id, 
@@ -118,7 +118,7 @@ func (s *Storage) saveOrder(ctx context.Context, tx pgx.Tx, order *models.Order)
 	return err
 }
 
-func (s *Storage) saveDelivery(ctx context.Context, tx pgx.Tx, order *models.Order) error {
+func (pgrepo *PostgresRepo) saveDelivery(ctx context.Context, tx pgx.Tx, order *models.Order) error {
 	query := `
 		INSERT INTO deliveries (
 			order_uid, name, phone, zip, city, address, region, email
@@ -137,7 +137,7 @@ func (s *Storage) saveDelivery(ctx context.Context, tx pgx.Tx, order *models.Ord
 	return err
 }
 
-func (s *Storage) savePayment(ctx context.Context, tx pgx.Tx, order *models.Order) error {
+func (pgrepo *PostgresRepo) savePayment(ctx context.Context, tx pgx.Tx, order *models.Order) error {
 	query := `
 		INSERT INTO payments (
 			order_uid, transaction, request_id, currency, provider, amount, 
@@ -160,7 +160,7 @@ func (s *Storage) savePayment(ctx context.Context, tx pgx.Tx, order *models.Orde
 	return err
 }
 
-func (s *Storage) saveItems(ctx context.Context, tx pgx.Tx, order *models.Order) error {
+func (pgrepo *PostgresRepo) saveItems(ctx context.Context, tx pgx.Tx, order *models.Order) error {
 	query := `
 		INSERT INTO items (
 			order_uid, chrt_id, track_number, price, rid, name, sale, size, 

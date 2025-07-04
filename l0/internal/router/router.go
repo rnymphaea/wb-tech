@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"wb-tech-l0/internal/handler"
-	"wb-tech-l0/internal/database/postgres"
+	"wb-tech-l0/internal/database"
 )
 
-func NewRouter(storage *postgres.Storage) *http.ServeMux {
+func NewRouter(storage *database.Storage) *http.ServeMux {
 	mux := http.NewServeMux()
 	orderHandler := handler.NewOrderHandler(storage)
 

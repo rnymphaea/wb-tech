@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"wb-tech-l0/internal/database/postgres"
+	"wb-tech-l0/internal/database"
 )
 
 type OrderHandler struct {
-	storage *postgres.Storage
+	storage *database.Storage
 }
 
-func NewOrderHandler(storage *postgres.Storage) *OrderHandler {
+func NewOrderHandler(storage *database.Storage) *OrderHandler {
 	return &OrderHandler{storage: storage}
 }
 

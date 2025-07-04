@@ -2,30 +2,36 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 )
 
 type DatabaseConfig struct {
-	Host         string `env:"DB_HOST"`
-	Port         int    `env:"DB_PORT"`
-	Username     string `env:"DB_USER"`
-	Password     string `env:"DB_PASSWORD"`
-	DatabaseName string `env:"DB_NAME"`
+	Host         string `env:"DB_HOST,required"`
+	Port         int    `env:"DB_PORT" envDefault:"5432"`
+	Username     string `env:"DB_USER,required"`
+	Password     string `env:"DB_PASSWORD,required"`
+	DatabaseName string `env:"DB_NAME,required"`
+}
+
+type RedisConfig struct {
+	Addr string `env:"REDIS_ADDR,required"`
+	TTL  int    `env:"REDIS_TTL" envDefault:"3600"`
 }
 
 type Config struct {
 	Database DatabaseConfig
+	Redis    RedisConfig
 }
 
 func LoadConfig() (*Config, error) {
-	var dbcfg DatabaseConfig
-
-	if err := env.Parse(&dbcfg); err != nil {
+	var cfg Config
+	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
-	
-	return &Config{Database: dbcfg}, nil
+
+	return &cfg, nil
 }
 
 func (config *Config) GetDatabaseURL() string {
@@ -35,4 +41,8 @@ func (config *Config) GetDatabaseURL() string {
 		config.Database.Host,
 		config.Database.Port,
 		config.Database.DatabaseName)
+}
+
+func (config *Config) GetRedisTTL() time.Duration {
+	return time.Duration(config.Redis.TTL) * time.Second
 }
