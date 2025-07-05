@@ -35,6 +35,9 @@ func (pgrepo *PostgresRepo) GetOrderByUID(ctx context.Context, uid string) (*mod
 		&order.Payment.DeliveryCost, &order.Payment.GoodsTotal, &order.Payment.CustomFee,
 	)
 	if err != nil {
+		if err == pgx.ErrNoRows{
+			return nil, nil
+		}
 		return nil, err
 	}
 

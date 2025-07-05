@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"context"
 	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"wb-tech-l0/internal/config"
 	"wb-tech-l0/internal/router"
@@ -52,6 +55,7 @@ func main() {
 
 	consumerCtx, consumerCancel := context.WithCancel(context.Background())
 	defer consumerCancel()
+
 	go kafkaConsumer.Run(consumerCtx)
 	log.Printf("Kafka consumer started for topic: %s", cfg.Kafka.Topic)
 
@@ -61,6 +65,27 @@ func main() {
 		Handler: mux,
 	}
 	
-	log.Printf("Server started on port %v", server.Addr)
-	server.ListenAndServe()
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	
+	go func() {
+		log.Printf("Starting HTTP server on %v", server.Addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP server failed: %v", err)
+		}
+	}()
+
+	<-quit
+	log.Println("Shutting down server...")
+	
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("HTTP server shutdown error: %v", err)
+	}
+	
+	consumerCancel()
+	
+	log.Println("Server exited gracefully")
 }

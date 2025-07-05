@@ -35,6 +35,10 @@ func (s *Storage) GetOrderByUID(ctx context.Context, uid string) (*models.Order,
 		return nil, err
 	}
 
+	if order == nil {
+		return nil, nil
+	}
+
 	if err := s.cache.SetOrder(ctx, order); err != nil {
 		log.Printf("Failed to cache order %s: %v", uid, err)
 	}
