@@ -16,13 +16,20 @@ type DatabaseConfig struct {
 }
 
 type RedisConfig struct {
-	Addr string `env:"REDIS_ADDR,required"`
-	TTL  int    `env:"REDIS_TTL" envDefault:"3600"`
+	Addr string        `env:"REDIS_ADDR,required"`
+	TTL  time.Duration `env:"REDIS_TTL" envDefault:"3600s"`
+}
+
+type KafkaConfig struct {
+	Brokers []string `env:"KAFKA_BROKERS" envSeparator:"," envDefault:"localhost:9092"`
+	Topic   string   `env:"KAFKA_TOPIC" envDefault:"orders"`
+	GroupID string   `env:"KAFKA_GROUP_ID" envDefault:"orders-consumer-group"`
 }
 
 type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
+	Kafka    KafkaConfig
 }
 
 func LoadConfig() (*Config, error) {

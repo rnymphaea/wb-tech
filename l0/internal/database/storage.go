@@ -43,3 +43,7 @@ func (s *Storage) GetOrderByUID(ctx context.Context, uid string) (*models.Order,
 
 	return order, nil
 }
+
+func (s *Storage) SaveOrder(ctx context.Context, order *models.Order) error {
+	return s.db.SaveOrder(ctx, order)
+}

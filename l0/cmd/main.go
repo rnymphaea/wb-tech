@@ -11,6 +11,7 @@ import (
 	"wb-tech-l0/internal/database/postgres"
 	"wb-tech-l0/internal/database/cache/redis"
 	"wb-tech-l0/internal/database"
+	"wb-tech-l0/internal/kafka"
 )
 
 func main() {
@@ -24,12 +25,13 @@ func main() {
 	
 	pgrepo, err := postgres.New(databaseURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to Postgres: %v", err)
 	}
+	log.Println("Connected to Postgres")
 
 	defer pgrepo.Close()
 
-	cache := redis.NewRedisCache(cfg.Redis.Addr, cfg.GetRedisTTL())
+	cache := redis.NewRedisCache(cfg.Redis.Addr, cfg.Redis.TTL)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -41,10 +43,24 @@ func main() {
 	
 	storage := database.New(cache, pgrepo)
 
+	kafkaConsumer := kafka.NewConsumer(
+		cfg.Kafka.Brokers,
+		cfg.Kafka.Topic,
+		cfg.Kafka.GroupID,
+		storage,
+	)
+
+	consumerCtx, consumerCancel := context.WithCancel(context.Background())
+	defer consumerCancel()
+	go kafkaConsumer.Run(consumerCtx)
+	log.Printf("Kafka consumer started for topic: %s", cfg.Kafka.Topic)
+
 	mux := router.NewRouter(storage)
 	server := &http.Server{
 		Addr: ":8080",
 		Handler: mux,
 	}
+	
+	log.Printf("Server started on port %v", server.Addr)
 	server.ListenAndServe()
 }
