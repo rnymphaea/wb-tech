@@ -15,6 +15,7 @@ import (
 	"wb-tech-l0/internal/database/cache/redis"
 	"wb-tech-l0/internal/database"
 	"wb-tech-l0/internal/kafka"
+	_ "wb-tech-l0/internal/handler" 
 )
 
 func main() {

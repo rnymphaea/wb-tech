@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Lookup</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        .error { color: #dc3545; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Order Lookup</h1>
+        
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="order_uid">Order UID:</label>
+                <input type="text" id="order_uid" name="uid" 
+                       placeholder="Enter order ID" required>
+            </div>
+            <button type="submit">Find Order</button>
+        </form>
+
+        {{if .Error}}
+            <div class="error">{{.Error}}</div>
+        {{end}}
+
+        <script>
+            document.getElementById('orderForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const uid = document.getElementById('order_uid').value;
+                window.location.href = '/order/' + encodeURIComponent(uid);
+            });
+        </script>
+    </div>
+</body>
+</html>

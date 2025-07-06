@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -23,7 +22,7 @@ func (h *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	uid := strings.TrimPrefix(path, "/order/")
 	if uid == "" {
-		http.Error(w, "Order UID is required", http.StatusBadRequest)
+		http.Redirect(w, r, "/?error=Order+UID+is+required", http.StatusSeeOther)
 		return
 	}
 
@@ -33,17 +32,23 @@ func (h *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	order, err := h.storage.GetOrderByUID(ctx, uid)
 	if err != nil {
 		log.Printf("Error getting order: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Redirect(w, r, "/?error=Internal+server+error", http.StatusSeeOther)
 		return
 	}
 	if order == nil {
-		http.Error(w, "Order not found", http.StatusNotFound)
+		http.Redirect(w, r, "/?error=Order+not+found", http.StatusSeeOther)
 		return
 	}
+	data := map[string]interface{}{
+    "Title": "Order Details",
+		"Order": order,
+  }
+
+  err = templates.ExecuteTemplate(w, "order.html", data)
+  if err != nil {
+    log.Printf("Error rendering order page: %v", err)
+    http.Error(w, "Internal server error", http.StatusInternalServerError)
+  }
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(order); err != nil {
-		log.Printf("Error encoding response: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
 }
