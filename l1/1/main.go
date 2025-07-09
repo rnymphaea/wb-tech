@@ -32,7 +32,7 @@ func (a Action) Start() {
 	// демонстрация того, что Action может обращаться к полям встариваемой структуры Human
 	fmt.Printf("Employee %s %s started working on %s.\n", a.FirstName, a.LastName, a.CurrentTask)
 
-	// ититация работы
+	// имитация работы
 	time.Sleep(a.Duration)
 }
 
@@ -43,7 +43,7 @@ func (a Action) Finish() {
 }
 
 func main() {
-	// Создаем экземпляр структуры Human
+	// создаём экземпляр структуры Human
 	human := Human{
 		FirstName:  "Ivan",
 		LastName:   "Ivanov",
@@ -51,7 +51,7 @@ func main() {
 		Profession: "Go developer",
 	}
 
-	// Создаем первое действие (Api optimization)
+	// создаём первое действие (Api optimization)
 	apiOptimization := Action{
 		Human:       human,
 		CurrentTask: "Api optimization",
@@ -65,7 +65,7 @@ func main() {
 	apiOptimization.Start()
 	apiOptimization.Finish()
 	
-	// Создаем второе действие (Method modification)
+	// создаём второе действие (Method modification)
 	methodModification := Action{
 		Human:       human,
 		CurrentTask: "Method modification",
