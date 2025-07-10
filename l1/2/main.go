@@ -31,7 +31,6 @@ func main() {
 				log.Printf("[DEBUG] Goroutine %d received value %d. After processing got: %d", idx, v, v*v)
 			} else {
 				fmt.Println(v * v)
-
 			}
 		}(idx, value)
 	}
