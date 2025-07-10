@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,7 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
+
 	go func() {
 		<-quit
 		if debug {
@@ -46,9 +48,13 @@ func main() {
 	}()
 
 	ch := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(workers)
 
 	for i := 0; i < workers; i++ {
-		go func(ctx context.Context, idx int) {
+		go func(ctx context.Context, wg *sync.WaitGroup, idx int) {
+			defer wg.Done()
+
 			for {
 				select {
 				case <-ctx.Done():
@@ -69,15 +75,16 @@ func main() {
 					}
 				}
 			}
-		}(ctx, i)
+		}(ctx, &wg, i)
 	}
 
 	for i := 0; i < sizedata; i++ {
 		select {
 		case <-ctx.Done():
 			if debug {
-				log.Println("[DEBUG] Main goroutine received shutdown signal")
+				log.Println("[DEBUG] Main goroutine received shutdown signal\n")
 			}
+			wg.Wait()
 			return
 		default:
 			if debug {
@@ -88,5 +95,6 @@ func main() {
 		}
 	}
 
+	wg.Wait()
 	close(ch)
 }
