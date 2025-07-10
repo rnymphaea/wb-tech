@@ -10,7 +10,7 @@ import (
 var debug bool
 
 func main() {
-	flag.BoolVar(&debug, "debug", false, "show logs to check the correctness execution")
+	flag.BoolVar(&debug, "debug", false, "show logs to check the correctness of execution")
 	flag.Parse()
 
 	arr := [5]int{2, 4, 6, 8, 10}
