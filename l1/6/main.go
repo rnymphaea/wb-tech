@@ -33,6 +33,8 @@ func main() {
 	OsExit()
 }
 
+// ConditionalExit демонстрирует остановку горутины по флагу stop.
+// Горутина проверяет условие !stop на каждой итерации и завершается, когда флаг становится true.
 func ConditionalExit() {
 	var (
 		stop     bool = false
@@ -82,6 +84,8 @@ func ConditionalExit() {
 	wg.Wait()
 }
 
+// ChannelExit демонстрирует остановку горутины через сигнальный канал.
+// Использует select для проверки канала stop. При получении сигнала горутина завершает работу.
 func ChannelExit() {
 	var (
 		wg       sync.WaitGroup
@@ -136,6 +140,8 @@ func ChannelExit() {
 	wg.Wait()
 }
 
+// ContextWithTimeoutExit демонстрирует остановку горутины по истечении таймаута контекста.
+// Использует context.WithTimeout для автоматической отмены через указанное время.
 func ContextWithTimeoutExit() {
 	var (
 		wg       sync.WaitGroup
@@ -189,6 +195,8 @@ func ContextWithTimeoutExit() {
 	wg.Wait()
 }
 
+// ContextWithCancelExit демонстрирует остановку горутины через отмену контекста.
+// Использует context.WithCancel для ручного управления завершением работы.
 func ContextWithCancelExit() {
 	var (
 		wg       sync.WaitGroup
@@ -243,6 +251,7 @@ func ContextWithCancelExit() {
 	wg.Wait()
 }
 
+// RuntimeGoExit демонстрирует остановку текущей горутины через runtime.Goexit().
 func RuntimeGoExit() {
 	var (
 		wg       sync.WaitGroup
@@ -284,6 +293,8 @@ func RuntimeGoExit() {
 	wg.Wait()
 }
 
+// ClosedChannelExit демонстрирует остановку горутины при закрытии канала.
+// Горутина завершает работу при выходе из range по закрытому каналу.
 func ClosedChannelExit() {
 	var (
 		wg       sync.WaitGroup
@@ -334,6 +345,7 @@ func ClosedChannelExit() {
 	wg.Wait()
 }
 
+// PanicExit демонстрирует аварийное завершение горутины через panic с последующим восстановлением через recover.
 func PanicExit() {
 	var (
 		wg       sync.WaitGroup
@@ -385,6 +397,7 @@ func PanicExit() {
 	wg.Wait()
 }
 
+// TimeAfterExit демонстрирует остановку горутины по истечении времени через time.After.
 func TimeAfterExit() {
 	var (
 		wg       sync.WaitGroup
@@ -437,6 +450,7 @@ func TimeAfterExit() {
 	wg.Wait()
 }
 
+// OsExit демонстрирует завершение всей программы из горутины через os.Exit.
 func OsExit() {
 	var (
 		wg       sync.WaitGroup
