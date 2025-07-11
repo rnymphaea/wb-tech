@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -26,6 +27,10 @@ func main() {
 	ContextWithTimeoutExit()
 	ContextWithCancelExit()
 	RuntimeGoExit()
+	ClosedChannelExit()
+	PanicExit()
+	TimeAfterExit()
+	OsExit()
 }
 
 func ConditionalExit() {
@@ -70,7 +75,7 @@ func ConditionalExit() {
 	if debug {
 		log.Printf("[DEBUG] %s: [%vms] the condition stops being fulfilled\n", funcName, time.Since(start).Milliseconds())
 	} else {
-		fmt.Println("The condition stops being fulfilled. Quitting...")
+		fmt.Printf("%s: the condition stops being fulfilled. Quitting...\n", funcName)
 	}
 
 	stop = true
@@ -124,7 +129,7 @@ func ChannelExit() {
 	if debug {
 		log.Printf("[DEBUG] %s: [%vms] sending stop signal to channel\n", funcName, time.Since(start).Milliseconds())
 	} else {
-		fmt.Println("Sending stop signal to channel. Quitting...")
+		fmt.Printf("%s: sending stop signal to channel. Quitting...\n", funcName)
 	}
 
 	stop <- struct{}{}
@@ -265,9 +270,9 @@ func RuntimeGoExit() {
 		time.Sleep(timeout)
 
 		if debug {
-			log.Printf("[DEBUG] %s: [%dms] goroutine: quitting after sleep...\n", funcName, time.Since(start).Milliseconds())
+			log.Printf("[DEBUG] %s: [%dms] goroutine: quitting after sleep\n", funcName, time.Since(start).Milliseconds())
 		} else {
-			fmt.Printf("%s: quitting goroutine after sleep...\n", funcName)
+			fmt.Printf("%s: quitting goroutine after sleep\n", funcName)
 		}
 
 		runtime.Goexit()
@@ -276,5 +281,196 @@ func RuntimeGoExit() {
 	if debug {
 		log.Printf("%s: [%dms] waiting for goroutine", funcName, time.Since(start).Milliseconds())
 	}
+	wg.Wait()
+}
+
+func ClosedChannelExit() {
+	var (
+		wg       sync.WaitGroup
+		start    time.Time
+		interval time.Duration = 200 * time.Millisecond
+		funcName string        = "func ClosedChannelExit"
+	)
+
+	if debug {
+		log.Println("\nDemonstrating of exiting a goroutine by closing a channel")
+		log.Printf("Interval between messages sending to channel: %v\n", interval)
+		start = time.Now()
+	}
+
+	ch := make(chan int)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for v := range ch {
+			if debug {
+				log.Printf("[DEBUG] %s: [%dms] receiver got: %d\n", funcName, time.Since(start).Milliseconds(), v)
+			} else {
+				fmt.Printf("%s: receiver: channel is not closed\n", funcName)
+			}
+		}
+
+		if debug {
+			log.Printf("[DEBUG] %s: [%dms] receiver: channel is closed\n", funcName, time.Since(start).Milliseconds())
+		} else {
+			fmt.Printf("%s: receiver discovered that channel is closed. Quitting...\n", funcName)
+		}
+	}()
+
+	for i := 0; i < 5; i++ {
+		if debug {
+			log.Printf("[DEBUG] %s: [%dms] sender: sending %d\n", funcName, time.Since(start).Milliseconds(), i)
+		}
+		ch <- i
+		time.Sleep(interval)
+	}
+
+	if debug {
+		log.Printf("[DEBUG] %s: [%dms] sender: closing the channel\n", funcName, time.Since(start).Milliseconds())
+	}
+	close(ch)
+	wg.Wait()
+}
+
+func PanicExit() {
+	var (
+		wg       sync.WaitGroup
+		start    time.Time
+		timeout  time.Duration = 1 * time.Second
+		funcName string        = "func RuntimeGoExit"
+	)
+
+	if debug {
+		log.Println("\nDemonstrating of exiting a goroutine by panic")
+		log.Printf("Timeout: %v\n", timeout)
+		start = time.Now()
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("%s: recovered from panic:", funcName, r)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		defer func() {
+			if r := recover(); r != nil {
+				if debug {
+					log.Printf("[DEBUG] %s: [%dms] goroutine recovered from panic: %v\n", funcName, time.Since(start).Milliseconds(), r)
+				} else {
+					fmt.Printf("%s: goroutine recovered from panic: %v\n", funcName, r)
+				}
+			}
+		}()
+
+		if debug {
+			log.Printf("[DEBUG] %s: [%dms] entering to goroutine\n", funcName, time.Since(start).Milliseconds())
+		} else {
+			fmt.Printf("%s: entering to goroutine\n", funcName)
+		}
+
+		time.Sleep(timeout)
+		if debug {
+			log.Printf("[DEBUG] %s: [%dms] goroutine: calling panic...\n", funcName, time.Since(start).Milliseconds())
+		}
+
+		panic("stop goroutine")
+	}()
+
+	wg.Wait()
+}
+
+func TimeAfterExit() {
+	var (
+		wg       sync.WaitGroup
+		start    time.Time
+		interval time.Duration = 200 * time.Millisecond
+		timeout  time.Duration = 1 * time.Second
+		funcName string        = "func TimeAfterExit"
+	)
+
+	if debug {
+		log.Println("\nDemonstrating of exiting a goroutine with time.After")
+		log.Printf("Interval between messages of goroutine: %v\n", interval)
+		log.Printf("Timeout: %v\n", timeout)
+		start = time.Now()
+	}
+
+	quit := time.After(timeout)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-quit:
+				if debug {
+					log.Printf("[DEBUG] %s: [%dms] goroutine: time exceeded\n", funcName, time.Since(start).Milliseconds())
+				} else {
+					fmt.Printf("%s: goroutine stops working\n", funcName)
+				}
+				return
+			default:
+				if debug {
+					log.Printf("[DEBUG] %s: [%dms] goroutine is working\n", funcName, time.Since(start).Milliseconds())
+				} else {
+					fmt.Printf("%s: goroutine is working\n", funcName)
+
+				}
+				time.Sleep(interval)
+			}
+		}
+	}()
+
+	if debug {
+		log.Printf("[DEBUG] %s: [%dms] sleeping for %v...\n", funcName, time.Since(start).Milliseconds(), timeout.Milliseconds())
+	}
+
+	time.Sleep(timeout)
+
+	wg.Wait()
+}
+
+func OsExit() {
+	var (
+		wg       sync.WaitGroup
+		start    time.Time
+		timeout  time.Duration = 1 * time.Second
+		funcName string        = "func OsExit"
+	)
+
+	if debug {
+		log.Println("\nDemonstrating of exiting a goroutine with os.Exit")
+		log.Printf("Timeout: %v\n", timeout)
+		start = time.Now()
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if debug {
+			log.Printf("[DEBUG] %s: [%dms] entering to goroutine and sleeping for %v\n", funcName, time.Since(start).Milliseconds(), timeout)
+		} else {
+			fmt.Printf("%s: entering to goroutine\n", funcName)
+		}
+
+		time.Sleep(timeout)
+
+		if debug {
+			log.Printf("[DEBUG] %s: [%dms] goroutine: calling os.Exit...\n", funcName, time.Since(start).Milliseconds())
+		} else {
+			fmt.Printf("%s: goroutine is calling os.Exit\n", funcName)
+		}
+
+		os.Exit(0)
+	}()
+
 	wg.Wait()
 }
