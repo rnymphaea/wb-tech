@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -32,20 +31,21 @@ func main() {
 		start = time.Now()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	defer cancel()
+	quit := time.After(time.Duration(timeout) * time.Second)
+	stopReceiver := make(chan struct{})
 
 	ch := make(chan int)
 	defer close(ch)
 
 	var wg sync.WaitGroup
+
 	wg.Add(1)
-	go func(ctx context.Context) {
+	go func() {
 		defer wg.Done()
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-stopReceiver:
 				if debug {
 					log.Printf("[DEBUG] %dms Receiver: time exceeded\n", time.Since(start).Milliseconds())
 				}
@@ -58,15 +58,16 @@ func main() {
 				}
 			}
 		}
-	}(ctx)
+	}()
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-quit:
 			if debug {
 				log.Printf("[DEBUG] %dms Sender: time exceeded\n", time.Since(start).Milliseconds())
 			}
 
+			stopReceiver <- struct{}{}
 			wg.Wait()
 			return
 		default:
@@ -80,4 +81,5 @@ func main() {
 			time.Sleep(interval)
 		}
 	}
+
 }
