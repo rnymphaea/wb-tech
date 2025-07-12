@@ -38,9 +38,6 @@ func Intersection(set1, set2 []int) []int {
 
 	if debug {
 		log.Printf("[DEBUG] map after writing elements of set 1: %v\n", m)
-	}
-
-	if debug {
 		log.Println("[DEBUG] checking set 2")
 	}
 
