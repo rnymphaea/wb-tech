@@ -21,12 +21,14 @@ func main() {
 	flag.DurationVar(&interval, "interval", 1*time.Second, "interval between messages (seconds)")
 	flag.Parse()
 
+	var start time.Time
 	if debug {
 		log.SetFlags(0)
 		log.Println("Debug mode started")
 		log.Printf("Amount of workers: %d\n", workers)
 		log.Printf("Amount of messages to send: %d\n", sizedata)
 		log.Printf("Interval beetween messages: %v\n", interval)
+		start = time.Now()
 	}
 
 	ch := make(chan int)
@@ -37,12 +39,12 @@ func main() {
 				v, ok := <-ch
 				if ok {
 					if debug {
-						log.Printf("[DEBUG] worker %d received from chan: %d\n", idx, v)
+						log.Printf("[DEBUG] %dms worker %d received from chan: %d\n", time.Since(start).Milliseconds(), idx, v)
 					} else {
 						fmt.Println(v)
 					}
 				} else {
-					log.Printf("[DEBUG] worker %d discovered that the channel is closed\n", idx)
+					log.Printf("[DEBUG] %dms worker %d discovered that the channel is closed\n", time.Since(start).Milliseconds(), idx)
 					break
 				}
 			}
@@ -51,7 +53,7 @@ func main() {
 
 	for i := 0; i < sizedata; i++ {
 		if debug {
-			log.Printf("[DEBUG] Main goroutine sended to chan: %d\n", i)
+			log.Printf("[DEBUG] %dms main goroutine sended to chan: %d\n", time.Since(start).Milliseconds(), i)
 		}
 		ch <- i
 		time.Sleep(interval)
