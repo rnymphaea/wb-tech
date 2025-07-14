@@ -22,7 +22,7 @@ Usage of /path/to/exe/graceful_shutdown:
 
 #### Стандартный вывод 
 ```bash
-go run graceful_shutdown.go 
+$ go run graceful_shutdown.go 
 ```
 ```
 0
