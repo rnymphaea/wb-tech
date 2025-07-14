@@ -24,7 +24,7 @@ Usage of /path/to/exe/workers:
 
 #### Стандартный вывод 
 ```bash
-go run workers.go 
+$ go run workers.go 
 ```
 ```
 0
