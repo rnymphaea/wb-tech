@@ -5,7 +5,7 @@
 Реализовать встраивание методов в структуре Action от родительской структуры Human (аналог наследования).
 ## Пример работы программы
 ```bash
-go run embedding.go
+$ go run embedding.go
 ```
 ```
 Hello! My first name is Ivan, my last name is Ivanov. I'm 30 years old. My profession is Go developer.
