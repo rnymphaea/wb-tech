@@ -102,10 +102,13 @@ func QuickSort(arr []int, reverse bool) []int {
 		log.Printf("[DEBUG] right array: %v\n", right)
 	}
 
-	res := make([]int, 0)
-	res = append(res, QuickSort(left, reverse)...)
+	sortedLeft := QuickSort(left, reverse)
+	sortedRight := QuickSort(right, reverse)
+
+	res := make([]int, 0, len(arr))
+	res = append(res, sortedLeft...)
 	res = append(res, base)
-	res = append(res, QuickSort(right, reverse)...)
+	res = append(res, sortedRight...)
 
 	return res
 }
