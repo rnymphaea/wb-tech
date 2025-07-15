@@ -8,7 +8,7 @@ import (
 )
 
 type Counter struct {
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	value int
 }
 
@@ -16,6 +16,13 @@ func (c *Counter) Inc() {
 	c.mu.Lock()
 	c.value++
 	c.mu.Unlock()
+}
+
+func (c *Counter) GetValue() int {
+	c.mu.RLock()
+	v := c.value
+	c.mu.RUnlock()
+	return v
 }
 
 var (
@@ -52,7 +59,7 @@ func main() {
 			defer wg.Done()
 			for j := 0; j < count; j++ {
 				if debug {
-					log.Printf("[DEBUG] goroutine #%d: incrementing counter (current = %d)\n", i, c.value)
+					log.Printf("[DEBUG] goroutine #%d: incrementing counter (current = %d)\n", i, c.GetValue())
 				}
 
 				c.Inc()
