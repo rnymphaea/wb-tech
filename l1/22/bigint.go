@@ -21,12 +21,12 @@ func main() {
 	product := new(big.Int).Mul(a, b)
 
 	fmt.Printf("a = %s\nb = %s\n", a.String(), b.String())
-	fmt.Println("Сложение:", sum.String())
-	fmt.Println("Вычитание:", diff.String())
-	fmt.Println("Умножение:", product.String())
+	fmt.Println("Adding:", sum.String())
+	fmt.Println("Subtraction:", diff.String())
+	fmt.Println("Multiplication:", product.String())
 
 	if b.Sign() != 0 {
 		quotient := new(big.Int).Div(a, b)
-		fmt.Println("Деление:", quotient.String())
+		fmt.Println("Division:", quotient.String())
 	}
 }
