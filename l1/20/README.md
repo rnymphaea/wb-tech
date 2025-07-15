@@ -16,3 +16,7 @@ Enter number of words: 5
 Enter 3 words: cat horse dog pony fish
 Result:  fish pony dog horse cat
 ```
+## Тестирование
+```bash 
+$ go test -v
+```
