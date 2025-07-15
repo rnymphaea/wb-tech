@@ -2,6 +2,15 @@
 ## Задание
 Написать программу, которая конкурентно рассчитает значения квадратов чисел, взятых из массива [2,4,6,8,10], и выведет результаты в stdout.
 ## Пример работы программы
+#### Справка
+```bash
+$ go run concurrent_squaring.go --help
+```
+```
+Usage of /path/to/exe/concurrent_squaring:
+  -debug
+    	show logs to check the correctness of execution
+```
 #### Стандартный вывод 
 ```bash
 $ go run concurrent_squaring.go
@@ -13,6 +22,7 @@ $ go run concurrent_squaring.go
 36
 16
 ```
+#### Режим отображения логов
 ```bash
 $ go run concurrent_squaring.go --debug
 ```
