@@ -39,4 +39,7 @@ Ignore case? [y/n] y
 [DEBUG] map after iterating over array: map[cat:{} dog:{} horse:{}]
 Result:  [cat horse dog]
 ```
-
+## Тестирование
+```bash 
+$ go test -v
+```
