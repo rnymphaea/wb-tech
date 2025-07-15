@@ -35,3 +35,7 @@ Random: true
 [DEBUG] point 2: (34.276538, -51.646016)
 Distance between points:  72.15328740143389
 ```
+## Тестирование 
+```bash
+$ go test -v
+```
