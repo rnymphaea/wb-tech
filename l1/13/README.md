@@ -4,14 +4,12 @@
 ## Пример работы программы
 #### Справка
 ```bash
-$ go run unique_words.go --help
+$ go run exchange.go --help
 ```
 ```
-Usage of /path/to/exe/unique_words:
+Usage of /path/to/exe/exchange:
   -debug
     	show logs to check the correctness of execution
-  -default
-    	use default array of strings ('cat', 'cat', 'dog', 'cat', 'tree')
 
 ```
 
