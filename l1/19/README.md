@@ -11,3 +11,7 @@ $ go run reverse_string.go
 Enter the string: главрыба
 Reversed string:  абырвалг
 ```
+## Тестирование
+```bash 
+$ go test -v
+```
