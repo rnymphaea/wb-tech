@@ -73,4 +73,7 @@ Reverse order? [y/n] y
 [DEBUG] current array: [1]
 Result:  [44 40 37 32 31 19 18 12 1]
 ```
-
+## Тестирование
+```bash 
+$ go test -v
+```
