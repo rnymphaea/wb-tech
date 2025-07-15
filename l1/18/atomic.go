@@ -16,6 +16,10 @@ func (c *Counter) Inc() {
 	atomic.AddInt64(&c.value, 1)
 }
 
+func (c *Counter) GetValue() int64 {
+	return atomic.LoadInt64(&c.value)
+}
+
 var (
 	debug      bool
 	goroutines int
@@ -50,7 +54,7 @@ func main() {
 			defer wg.Done()
 			for j := 0; j < count; j++ {
 				if debug {
-					log.Printf("[DEBUG] goroutine #%d: incrementing counter (current = %d)\n", i, c.value)
+					log.Printf("[DEBUG] goroutine #%d: incrementing counter (current = %d)\n", i, c.GetValue())
 				}
 
 				c.Inc()
