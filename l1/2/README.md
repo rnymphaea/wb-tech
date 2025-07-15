@@ -13,7 +13,6 @@ $ go run concurrent_squaring.go
 36
 16
 ```
-```
 ```bash
 $ go run concurrent_squaring.go --debug
 ```
