@@ -35,3 +35,7 @@ Enter string: alskdjfA
 [DEBUG] excess symbols: [a]
 String 'alskdjfA' does not contain unique symbols
 ```
+## Тестирование
+```bash 
+$ go test -v
+```

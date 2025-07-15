@@ -32,8 +32,8 @@ func main() {
 }
 
 func UniqueSymbols(s string) bool {
-	lower := strings.ToLower(s)
-	m := make(map[byte]struct{})
+	lower := []rune(strings.ToLower(s))
+	m := make(map[rune]struct{})
 
 	var excess []string
 	if debug {
