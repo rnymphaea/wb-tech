@@ -18,7 +18,7 @@ const (
 var address string = "0.beevik-ntp.pool.ntp.org"
 
 func main() {
-	var extended *bool = flag.Bool("extended", false, UsageExtended)
+	var extended = flag.Bool("extended", false, UsageExtended)
 	flag.BoolVar(extended, "e", false, UsageExtended)
 	flag.Parse()
 
@@ -63,19 +63,19 @@ func printNTPResponse(r *ntp.Response) {
 func printHelp() {
 	fmt.Println(`
 Description:
-Time:           transmit time reported by the server just before it responded to the query
-ClockOffset:    estimated offset of the local system clock relative to the server's clock
-RTT:            measured round-trip-time delay estimate between the client and the server
-Precision:      reported precision of the server's clock
-Version:        NTP protocol version number reported by the server
-Stratum:        the 'stratum level' of the server. The smaller the number, the closer the server is to the reference clock
-ReferenceID:    32-bit integer identifying the server or reference clock
-ReferenceTime:  time when the server's system clock was last set or corrected
-RootDelay:      server's estimated aggregate round-trip-time delay to the stratum 1 server
-RootDispersion: server's estimated maximum measurement error relative to the stratum 1 server
-RootDistance:   estimate of the total synchronization distance between the client and the stratum 1 server
-Leap:           indicate whether a leap second should be added to or removed from the last minute of the current month
-MinError:       lower bound on the error between the client and server clocks
-KissCode:       a 4-character string describing the reason for a 'kiss of death' response (stratum=0)
-Poll:           maximum interval between successive NTP query messages to the server`)
+  Time           Transmit time reported by the server just before it responded to the query
+  ClockOffset    Estimated offset of the local system clock relative to the server's clock
+  RTT            Measured round-trip-time delay estimate between the client and the server
+  Precision      Reported precision of the server's clock
+  Version        NTP protocol version number reported by the server
+  Stratum        The 'stratum level' of the server. The smaller the number, the closer the server is to the reference clock
+  ReferenceID    32-bit integer identifying the server or reference clock
+  ReferenceTime  Time when the server's system clock was last set or corrected
+  RootDelay      Server's estimated aggregate round-trip-time delay to the stratum 1 server
+  RootDispersion Server's estimated maximum measurement error relative to the stratum 1 server
+  RootDistance   Estimate of the total synchronization distance between the client and the stratum 1 server
+  Leap           Indicate whether a leap second should be added to or removed from the last minute of the current month
+  MinError       Lower bound on the error between the client and server clocks
+  KissCode       A 4-character string describing the reason for a 'kiss of death' response (stratum=0)
+  Poll           Maximum interval between successive NTP query messages to the server`)
 }
