@@ -14,7 +14,7 @@ func main() {
 	fmt.Scan(&size)
 
 	s := make([]string, size)
-	fmt.Printf("Enter 3 words: ")
+	fmt.Printf("Enter %d words: ", size)
 
 	for i := 0; i < size; i++ {
 		fmt.Scan(&s[i])
