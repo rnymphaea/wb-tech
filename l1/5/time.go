@@ -68,6 +68,7 @@ func main() {
 			}
 
 			stopReceiver <- struct{}{}
+			close(stopReceiver)
 			wg.Wait()
 			return
 		default:
