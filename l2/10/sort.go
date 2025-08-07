@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	_ "strings"
+	"slices"
+	"strconv"
+	"strings"
 )
 
 const debugPrefix = "[DEBUG]"
@@ -20,11 +22,18 @@ var (
 
 type sortOptions struct {
 	key                  int
+	sep                  string
 	numeric              bool
 	reverse              bool
 	month                bool
 	human                bool
 	ignoreTrailingBlanks bool
+}
+
+type line struct {
+	text string
+	key  int
+	sep  string
 }
 
 func main() {
@@ -34,7 +43,8 @@ func main() {
 	flag.StringVar(&filepath, "file", "", "sort lines from specified file")
 
 	var opts sortOptions
-	flag.IntVar(&opts.key, "k", 1, "specify a sort field")
+	flag.IntVar(&opts.key, "k", 0, "specify a sort field")
+	flag.StringVar(&opts.sep, "t", "\t", "use character separator as the field separator")
 	flag.BoolVar(&opts.numeric, "n", false, "sort numerically")
 	flag.BoolVar(&opts.reverse, "r", false, "reverse the result of comparison")
 	flag.BoolVar(&opts.month, "M", false, "sort by month")
@@ -84,7 +94,12 @@ func main() {
 		return
 	}
 
-	sort(input, &opts)
+	res := sort(input, &opts)
+	fmt.Println("Result:")
+
+	for _, v := range res {
+		fmt.Println(v)
+	}
 }
 
 func readLinesFromFile(filepath string) ([]string, error) {
@@ -113,10 +128,10 @@ func readLinesFromStdin(size int) ([]string, error) {
 		scanner.Scan()
 		line := scanner.Text()
 
-		if len(line) == 0 {
-			break
-		} else {
+		if len(line) != 0 {
 			lines[i] = line
+		} else {
+			break
 		}
 	}
 
@@ -126,7 +141,9 @@ func readLinesFromStdin(size int) ([]string, error) {
 func validateOpts(opts *sortOptions) error {
 	if opts.key < 1 {
 		fmt.Println("invalid key, using default (key=1)")
-		opts.key = 1
+		opts.key = 0
+	} else {
+		opts.key -= 1
 	}
 
 	if !(opts.numeric && opts.month) && !(opts.numeric && opts.human) && !(opts.month && opts.human) {
@@ -137,5 +154,80 @@ func validateOpts(opts *sortOptions) error {
 }
 
 func sort(arr []string, opts *sortOptions) []string {
-	return arr
+	res := make([]string, len(arr))
+	lines := make([]line, len(arr))
+
+	key := opts.key
+	sep := opts.sep
+
+	for i, str := range arr {
+		lines[i] = line{
+			text: str,
+			key:  key,
+			sep:  sep,
+		}
+	}
+
+	var cmp func(a, b line) int
+	if opts.numeric {
+		cmp = cmpNumeric
+	}
+
+	slices.SortStableFunc(lines, cmp)
+
+	for i, v := range lines {
+		res[i] = v.text
+	}
+
+	return res
+}
+
+func cmpNumeric(a, b line) int {
+	const funcName = "cmpNumeric"
+
+	txt1 := strings.Split(a.text, a.sep)
+	txt2 := strings.Split(b.text, b.sep)
+
+	if debug {
+		log.Printf("%s %s: after splitting got: %q, %q\n", debugPrefix, funcName, txt1, txt2)
+	}
+
+	if a.key >= len(txt1) {
+		if b.key >= len(txt2) {
+			return strings.Compare(a.text, b.text)
+		} else {
+			return -1
+		}
+	} else if b.key >= len(txt2) {
+		return 1
+	}
+
+	num1, err1 := strconv.ParseFloat(txt1[a.key], 64)
+	num2, err2 := strconv.ParseFloat(txt2[b.key], 64)
+
+	if debug {
+		log.Printf("%s %s: num1: %f, err1: %v, num2: %f, err2: %v\n", debugPrefix, funcName, num1, err1, num2, err2)
+	}
+
+	if err1 != nil {
+		if err2 != nil {
+			if debug {
+				log.Printf("%s %s: both strings [%s] and [%s] don't have numbers at col %d\n", debugPrefix, funcName, a.text, b.text, a.key)
+			}
+
+			return strings.Compare(a.text, b.text)
+		} else {
+			return -1
+		}
+	} else if err2 != nil {
+		return 1
+	}
+
+	if num1 < num2 {
+		return -1
+	} else if num1 == num2 {
+		return 0
+	}
+
+	return 1
 }
