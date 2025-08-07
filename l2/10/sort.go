@@ -31,9 +31,10 @@ type sortOptions struct {
 }
 
 type line struct {
-	text string
-	key  int
-	sep  string
+	text    string
+	key     int
+	sep     string
+	reverse int
 }
 
 func main() {
@@ -160,11 +161,19 @@ func sort(arr []string, opts *sortOptions) []string {
 	key := opts.key
 	sep := opts.sep
 
+	var reverse int
+	if opts.reverse {
+		reverse = -1
+	} else {
+		reverse = 1
+	}
+
 	for i, str := range arr {
 		lines[i] = line{
-			text: str,
-			key:  key,
-			sep:  sep,
+			text:    str,
+			key:     key,
+			sep:     sep,
+			reverse: reverse,
 		}
 	}
 
@@ -194,12 +203,12 @@ func cmpNumeric(a, b line) int {
 
 	if a.key >= len(txt1) {
 		if b.key >= len(txt2) {
-			return strings.Compare(a.text, b.text)
+			return strings.Compare(a.text, b.text) * a.reverse
 		} else {
-			return -1
+			return -1 * a.reverse
 		}
 	} else if b.key >= len(txt2) {
-		return 1
+		return 1 * a.reverse
 	}
 
 	num1, err1 := strconv.ParseFloat(txt1[a.key], 64)
@@ -215,19 +224,19 @@ func cmpNumeric(a, b line) int {
 				log.Printf("%s %s: both strings [%s] and [%s] don't have numbers at col %d\n", debugPrefix, funcName, a.text, b.text, a.key)
 			}
 
-			return strings.Compare(a.text, b.text)
+			return strings.Compare(a.text, b.text) * a.reverse
 		} else {
-			return -1
+			return -1 * a.reverse
 		}
 	} else if err2 != nil {
-		return 1
+		return 1 * a.reverse
 	}
 
 	if num1 < num2 {
-		return -1
+		return -1 * a.reverse
 	} else if num1 == num2 {
 		return 0
 	}
 
-	return 1
+	return 1 * a.reverse
 }
