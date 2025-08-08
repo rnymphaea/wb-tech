@@ -354,3 +354,117 @@ func TestCmpHuman(t *testing.T) {
 		})
 	}
 }
+
+func TestCmpStrings(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b line
+		want int
+	}{
+		{
+			name: "basic comparison different columns",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "banana\t20", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("10", "20"),
+		},
+		{
+			name: "different columns same values",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "banana\t10", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("apple\t10", "banana\t10"),
+		},
+		{
+			name: "first column comparison",
+			a:    line{text: "apple\t10", key: 0, sep: "\t", reverse: 1},
+			b:    line{text: "banana\t10", key: 0, sep: "\t", reverse: 1},
+			want: strings.Compare("apple", "banana"),
+		},
+		{
+			name: "a missing column",
+			a:    line{text: "apple", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "banana\t20", key: 1, sep: "\t", reverse: 1},
+			want: -1,
+		},
+		{
+			name: "b missing column",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "banana", key: 1, sep: "\t", reverse: 1},
+			want: 1,
+		},
+		{
+			name: "both missing columns",
+			a:    line{text: "apple", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "banana", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("apple", "banana"),
+		},
+		{
+			name: "reverse basic comparison",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: -1},
+			b:    line{text: "banana\t20", key: 1, sep: "\t", reverse: -1},
+			want: -strings.Compare("10", "20"),
+		},
+		{
+			name: "reverse same columns",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: -1},
+			b:    line{text: "banana\t10", key: 1, sep: "\t", reverse: -1},
+			want: -strings.Compare("apple\t10", "banana\t10"),
+		},
+		{
+			name: "reverse missing column",
+			a:    line{text: "apple", key: 1, sep: "\t", reverse: -1},
+			b:    line{text: "banana\t20", key: 1, sep: "\t", reverse: -1},
+			want: 1,
+		},
+		{
+			name: "comma separator",
+			a:    line{text: "apple,10", key: 1, sep: ",", reverse: 1},
+			b:    line{text: "banana,20", key: 1, sep: ",", reverse: 1},
+			want: strings.Compare("10", "20"),
+		},
+		{
+			name: "custom separator",
+			a:    line{text: "apple|10", key: 1, sep: "|", reverse: 1},
+			b:    line{text: "banana|20", key: 1, sep: "|", reverse: 1},
+			want: strings.Compare("10", "20"),
+		},
+		{
+			name: "trailing spaces",
+			a:    line{text: "apple \t10 ", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "banana\t 20", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("10 ", " 20"),
+		},
+		{
+			name: "special characters in columns",
+			a:    line{text: "a\t!@#$", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "b\t%^&*", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("!@#$", "%^&*"),
+		},
+		{
+			name: "unicode characters",
+			a:    line{text: "a\tこんにちは", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "b\t你好", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("こんにちは", "你好"),
+		},
+		{
+			name: "equal keys different full strings",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "APPLE\t10", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("apple\t10", "APPLE\t10"),
+		},
+		{
+			name: "equal keys and full strings",
+			a:    line{text: "apple\t10", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "apple\t10", key: 1, sep: "\t", reverse: 1},
+			want: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := cmpStrings(tt.a, tt.b)
+			if got != tt.want {
+				t.Errorf("cmpStrings(%q, %q) = %d, want %d", tt.a.text, tt.b.text, got, tt.want)
+			}
+		})
+	}
+}

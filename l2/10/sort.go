@@ -177,7 +177,8 @@ func sort(arr []string, opts *sortOptions) []string {
 		}
 	}
 
-	var cmp func(a, b line) int
+	var cmp func(a, b line) int = cmpStrings
+
 	if opts.numeric {
 		cmp = cmpNumeric
 	}
@@ -385,4 +386,32 @@ func cmpHuman(a, b line) int {
 	}
 
 	return (suffInd1 - suffInd2) * a.reverse
+}
+
+func cmpStrings(a, b line) int {
+	const funcName = "cmpStrings"
+
+	txt1 := strings.Split(a.text, a.sep)
+	txt2 := strings.Split(b.text, b.sep)
+
+	if debug {
+		log.Printf("%s %s: after splitting got: %q, %q\n", debugPrefix, funcName, txt1, txt2)
+	}
+
+	if a.key >= len(txt1) {
+		if b.key >= len(txt2) {
+			return strings.Compare(a.text, b.text) * a.reverse
+		} else {
+			return -1 * a.reverse
+		}
+	} else if b.key >= len(txt2) {
+		return 1 * a.reverse
+	}
+
+	res := strings.Compare(txt1[a.key], txt2[b.key])
+	if res == 0 {
+		return strings.Compare(a.text, b.text) * a.reverse
+	} else {
+		return res * a.reverse
+	}
 }
