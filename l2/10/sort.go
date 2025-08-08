@@ -186,6 +186,10 @@ func sort(arr []string, opts *sortOptions) []string {
 		cmp = cmpMonth
 	}
 
+	if opts.human {
+		cmp = cmpHuman
+	}
+
 	slices.SortStableFunc(lines, cmp)
 
 	for i, v := range lines {
@@ -305,4 +309,80 @@ func cmpMonth(a, b line) int {
 	}
 
 	return strings.Compare(a.text, b.text)
+}
+
+func cmpHuman(a, b line) int {
+	const (
+		funcName = "cmpHuman"
+		suffices = "bkmgtpezyrq"
+	)
+
+	txt1 := strings.Split(a.text, a.sep)
+	txt2 := strings.Split(b.text, b.sep)
+
+	if debug {
+		log.Printf("%s %s: after splitting got: %q, %q\n", debugPrefix, funcName, txt1, txt2)
+	}
+
+	if a.key >= len(txt1) {
+		if b.key >= len(txt2) {
+			return strings.Compare(a.text, b.text) * a.reverse
+		} else {
+			return -1 * a.reverse
+		}
+	} else if b.key >= len(txt2) {
+		return 1 * a.reverse
+	}
+
+	if len(txt1[a.key]) == 0 {
+		if len(txt2[b.key]) == 0 {
+			return strings.Compare(a.text, b.text) * a.reverse
+		} else {
+			return -1 * a.reverse
+		}
+	} else if len(txt2[b.key]) == 0 {
+		return 1 * a.reverse
+	}
+
+	val1, suff1 := string(txt1[a.key][:len(txt1[a.key])-1]), string(txt1[a.key][len(txt1[a.key])-1])
+	val2, suff2 := string(txt2[b.key][:len(txt2[b.key])-1]), string(txt2[b.key][len(txt2[b.key])-1])
+
+	suff1 = strings.ToLower(suff1)
+	suff2 = strings.ToLower(suff2)
+
+	if debug {
+		log.Printf("%s %s: [val1: %q, suff1: %q] [val2: %q, suff2: %q]\n", debugPrefix, funcName, val1, suff1, val2, suff2)
+	}
+
+	suffInd1 := strings.Index(suffices, suff1)
+	suffInd2 := strings.Index(suffices, suff2)
+
+	if suffInd1 == -1 {
+		if suffInd2 == -1 {
+			return strings.Compare(a.text, b.text) * a.reverse
+		} else {
+			return -1 * a.reverse
+		}
+	} else if suffInd2 == -1 {
+		return 1 * a.reverse
+	}
+
+	if suffInd1 == suffInd2 {
+		num1, err1 := strconv.Atoi(val1)
+		num2, err2 := strconv.Atoi(val2)
+
+		if err1 != nil {
+			if err2 != nil {
+				return strings.Compare(a.text, b.text) * a.reverse
+			} else {
+				return -1 * a.reverse
+			}
+		} else if err2 != nil {
+			return 1 * a.reverse
+		}
+
+		return (num1 - num2) * a.reverse
+	}
+
+	return (suffInd1 - suffInd2) * a.reverse
 }

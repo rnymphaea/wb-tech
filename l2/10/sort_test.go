@@ -216,3 +216,141 @@ func TestCmpMonth(t *testing.T) {
 		})
 	}
 }
+
+func TestCmpHuman(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b line
+		want int
+	}{
+		{
+			name: "same suffix different values",
+			a:    line{text: "file1\t10K", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5K", key: 1, sep: "\t", reverse: 1},
+			want: 5,
+		},
+		{
+			name: "different suffixes same values",
+			a:    line{text: "file1\t10M", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t10K", key: 1, sep: "\t", reverse: 1},
+			want: 1,
+		},
+		{
+			name: "different suffixes different values",
+			a:    line{text: "file1\t5M", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t10K", key: 1, sep: "\t", reverse: 1},
+			want: 1,
+		},
+		{
+			name: "same value and suffix",
+			a:    line{text: "file1\t10G", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t10G", key: 1, sep: "\t", reverse: 1},
+			want: 0,
+		},
+		{
+			name: "a invalid suffix",
+			a:    line{text: "file1\t10X", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5K", key: 1, sep: "\t", reverse: 1},
+			want: -1,
+		},
+		{
+			name: "b invalid suffix",
+			a:    line{text: "file1\t10M", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5N", key: 1, sep: "\t", reverse: 1},
+			want: 1,
+		},
+		{
+			name: "both invalid suffixes",
+			a:    line{text: "file1\t10X", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5Y", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("file1\t10X", "file2\t5Y"),
+		},
+		{
+			name: "a non-numeric value",
+			a:    line{text: "file1\tABCK", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t10M", key: 1, sep: "\t", reverse: 1},
+			want: -1,
+		},
+		{
+			name: "mixed case suffixes",
+			a:    line{text: "file1\t10k", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5K", key: 1, sep: "\t", reverse: 1},
+			want: 5,
+		},
+		{
+			name: "uppercase vs lowercase same value",
+			a:    line{text: "file1\t10G", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t10g", key: 1, sep: "\t", reverse: 1},
+			want: 0,
+		},
+		{
+			name: "a missing column",
+			a:    line{text: "file1", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5T", key: 1, sep: "\t", reverse: 1},
+			want: -1,
+		},
+		{
+			name: "b missing column",
+			a:    line{text: "file1\t2P", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2", key: 1, sep: "\t", reverse: 1},
+			want: 1,
+		},
+		{
+			name: "both missing columns",
+			a:    line{text: "fileA", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "fileB", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("fileA", "fileB"),
+		},
+		{
+			name: "reverse same suffix different values",
+			a:    line{text: "file1\t10K", key: 1, sep: "\t", reverse: -1},
+			b:    line{text: "file2\t5K", key: 1, sep: "\t", reverse: -1},
+			want: -5,
+		},
+		{
+			name: "reverse different suffixes",
+			a:    line{text: "file1\t10M", key: 1, sep: "\t", reverse: -1},
+			b:    line{text: "file2\t10K", key: 1, sep: "\t", reverse: -1},
+			want: -1,
+		},
+		{
+			name: "reverse invalid suffix",
+			a:    line{text: "file1\t10X", key: 1, sep: "\t", reverse: -1},
+			b:    line{text: "file2\t5K", key: 1, sep: "\t", reverse: -1},
+			want: 1,
+		},
+		{
+			name: "single character values",
+			a:    line{text: "file1\tK", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\tM", key: 1, sep: "\t", reverse: 1},
+			want: -1,
+		},
+		{
+			name: "empty values",
+			a:    line{text: "file1\t", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t", key: 1, sep: "\t", reverse: 1},
+			want: strings.Compare("file1", "file2"),
+		},
+		{
+			name: "suffix without value",
+			a:    line{text: "file1\tK", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5", key: 1, sep: "\t", reverse: 1},
+			want: 1,
+		},
+		{
+			name: "value without suffix",
+			a:    line{text: "file1\t10", key: 1, sep: "\t", reverse: 1},
+			b:    line{text: "file2\t5K", key: 1, sep: "\t", reverse: 1},
+			want: -1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := cmpHuman(tt.a, tt.b)
+			if got != tt.want {
+				t.Errorf("cmpHuman(%q, %q) = %d, want %d", tt.a.text, tt.b.text, got, tt.want)
+			}
+		})
+	}
+}
