@@ -31,10 +31,11 @@ type sortOptions struct {
 }
 
 type line struct {
-	text    string
-	key     int
-	sep     string
-	reverse int
+	text                 string
+	key                  int
+	sep                  string
+	reverse              int
+	ignoreTrailingBlanks bool
 }
 
 func main() {
@@ -95,8 +96,23 @@ func main() {
 		return
 	}
 
+	if check {
+		res := isSorted(input, &opts)
+		if res {
+			fmt.Println("Lines are sorted")
+		} else {
+			fmt.Println("Lines are not sorted")
+		}
+		return
+	}
+
 	res := sort(input, &opts)
 	fmt.Println("Result:")
+
+	if unique {
+		printUniqueLines(res)
+		return
+	}
 
 	for _, v := range res {
 		fmt.Println(v)
@@ -152,6 +168,45 @@ func validateOpts(opts *sortOptions) error {
 	} else {
 		return fmt.Errorf("mutually exclusive flags")
 	}
+}
+
+func isSorted(arr []string, opts *sortOptions) bool {
+	lines := make([]line, len(arr))
+
+	key := opts.key
+	sep := opts.sep
+
+	var reverse int
+	if opts.reverse {
+		reverse = -1
+	} else {
+		reverse = 1
+	}
+
+	for i, str := range arr {
+		lines[i] = line{
+			text:    str,
+			key:     key,
+			sep:     sep,
+			reverse: reverse,
+		}
+	}
+
+	var cmp func(a, b line) int = cmpStrings
+
+	if opts.numeric {
+		cmp = cmpNumeric
+	}
+
+	if opts.month {
+		cmp = cmpMonth
+	}
+
+	if opts.human {
+		cmp = cmpHuman
+	}
+
+	return slices.IsSortedFunc(lines, cmp)
 }
 
 func sort(arr []string, opts *sortOptions) []string {
@@ -220,6 +275,11 @@ func cmpNumeric(a, b line) int {
 		return 1 * a.reverse
 	}
 
+	if a.ignoreTrailingBlanks {
+		txt1[a.key] = strings.TrimSuffix(txt1[a.key], " ")
+		txt2[b.key] = strings.TrimSuffix(txt2[b.key], " ")
+	}
+
 	num1, err1 := strconv.ParseFloat(txt1[a.key], 64)
 	num2, err2 := strconv.ParseFloat(txt2[b.key], 64)
 
@@ -270,6 +330,11 @@ func cmpMonth(a, b line) int {
 		}
 	} else if b.key >= len(txt2) {
 		return 1 * a.reverse
+	}
+
+	if a.ignoreTrailingBlanks {
+		txt1[a.key] = strings.TrimSuffix(txt1[a.key], " ")
+		txt2[b.key] = strings.TrimSuffix(txt2[b.key], " ")
 	}
 
 	date1 := strings.Split(strings.ToLower(txt1[a.key]), " ")
@@ -345,6 +410,11 @@ func cmpHuman(a, b line) int {
 		return 1 * a.reverse
 	}
 
+	if a.ignoreTrailingBlanks {
+		txt1[a.key] = strings.TrimSuffix(txt1[a.key], " ")
+		txt2[b.key] = strings.TrimSuffix(txt2[b.key], " ")
+	}
+
 	val1, suff1 := string(txt1[a.key][:len(txt1[a.key])-1]), string(txt1[a.key][len(txt1[a.key])-1])
 	val2, suff2 := string(txt2[b.key][:len(txt2[b.key])-1]), string(txt2[b.key][len(txt2[b.key])-1])
 
@@ -391,6 +461,11 @@ func cmpHuman(a, b line) int {
 func cmpStrings(a, b line) int {
 	const funcName = "cmpStrings"
 
+	if a.ignoreTrailingBlanks {
+		a.text = strings.TrimSuffix(a.text, " ")
+		b.text = strings.TrimSuffix(b.text, " ")
+	}
+
 	txt1 := strings.Split(a.text, a.sep)
 	txt2 := strings.Split(b.text, b.sep)
 
@@ -408,10 +483,25 @@ func cmpStrings(a, b line) int {
 		return 1 * a.reverse
 	}
 
+	if a.ignoreTrailingBlanks {
+		txt1[a.key] = strings.TrimSuffix(txt1[a.key], " ")
+		txt2[b.key] = strings.TrimSuffix(txt2[b.key], " ")
+	}
+
 	res := strings.Compare(txt1[a.key], txt2[b.key])
 	if res == 0 {
 		return strings.Compare(a.text, b.text) * a.reverse
 	} else {
 		return res * a.reverse
+	}
+}
+
+func printUniqueLines(lines []string) {
+	for i, v := range lines {
+		if i == 0 {
+			fmt.Println(v)
+		} else if v != lines[i-1] {
+			fmt.Println(v)
+		}
 	}
 }
