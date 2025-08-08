@@ -182,6 +182,10 @@ func sort(arr []string, opts *sortOptions) []string {
 		cmp = cmpNumeric
 	}
 
+	if opts.month {
+		cmp = cmpMonth
+	}
+
 	slices.SortStableFunc(lines, cmp)
 
 	for i, v := range lines {
@@ -239,4 +243,66 @@ func cmpNumeric(a, b line) int {
 	}
 
 	return 1 * a.reverse
+}
+
+func cmpMonth(a, b line) int {
+	const funcName = "cmpMonth"
+
+	months := map[string]int{"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+
+	txt1 := strings.Split(a.text, a.sep)
+	txt2 := strings.Split(b.text, b.sep)
+
+	if debug {
+		log.Printf("%s %s: after splitting got: %q, %q\n", debugPrefix, funcName, txt1, txt2)
+	}
+
+	if a.key >= len(txt1) {
+		if b.key >= len(txt2) {
+			return strings.Compare(a.text, b.text) * a.reverse
+		} else {
+			return -1 * a.reverse
+		}
+	} else if b.key >= len(txt2) {
+		return 1 * a.reverse
+	}
+
+	date1 := strings.Split(strings.ToLower(txt1[a.key]), " ")
+	date2 := strings.Split(strings.ToLower(txt2[b.key]), " ")
+
+	if len(date1) >= 2 && len(date2) >= 2 {
+		month1, ok1 := months[date1[1]]
+		month2, ok2 := months[date2[1]]
+
+		if !ok1 {
+			if !ok2 {
+				return strings.Compare(a.text, b.text) * a.reverse
+			} else {
+				return -1 * a.reverse
+			}
+		} else if !ok2 {
+			return 1 * a.reverse
+		}
+
+		if month1 == month2 {
+			day1, err1 := strconv.Atoi(date1[0])
+			day2, err2 := strconv.Atoi(date2[0])
+
+			if err1 != nil {
+				if err2 != nil {
+					return 0
+				} else {
+					return -1 * a.reverse
+				}
+			} else if err2 != nil {
+				return 1 * a.reverse
+			}
+
+			return (day1 - day2) * a.reverse
+		}
+
+		return (month1 - month2) * a.reverse
+	}
+
+	return strings.Compare(a.text, b.text)
 }
