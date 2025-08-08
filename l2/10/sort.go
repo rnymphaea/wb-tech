@@ -75,7 +75,12 @@ func main() {
 	} else {
 		var size int
 		fmt.Printf("Enter the number of strings: ")
-		fmt.Scan(&size)
+
+		_, err := fmt.Scan(&size)
+		if err != nil {
+			fmt.Println("error: ", err)
+			return
+		}
 
 		input, inputErr = readLinesFromStdin(size)
 		if inputErr != nil {
@@ -163,11 +168,15 @@ func validateOpts(opts *sortOptions) error {
 		opts.key -= 1
 	}
 
-	if !(opts.numeric && opts.month) && !(opts.numeric && opts.human) && !(opts.month && opts.human) {
-		return nil
-	} else {
+	conflict := (opts.numeric && opts.month) ||
+		(opts.numeric && opts.human) ||
+		(opts.month && opts.human)
+
+	if conflict {
 		return fmt.Errorf("mutually exclusive flags")
 	}
+
+	return nil
 }
 
 func isSorted(arr []string, opts *sortOptions) bool {
@@ -192,7 +201,7 @@ func isSorted(arr []string, opts *sortOptions) bool {
 		}
 	}
 
-	var cmp func(a, b line) int = cmpStrings
+	cmp := cmpStrings
 
 	if opts.numeric {
 		cmp = cmpNumeric
@@ -232,7 +241,7 @@ func sort(arr []string, opts *sortOptions) []string {
 		}
 	}
 
-	var cmp func(a, b line) int = cmpStrings
+	cmp := cmpStrings
 
 	if opts.numeric {
 		cmp = cmpNumeric
