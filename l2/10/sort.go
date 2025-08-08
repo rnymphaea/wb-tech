@@ -54,7 +54,6 @@ func main() {
 	flag.BoolVar(&opts.ignoreTrailingBlanks, "b", false, "ignore trailing blanks")
 
 	flag.Parse()
-	fmt.Println(opts)
 
 	if debug {
 		log.SetFlags(0)
