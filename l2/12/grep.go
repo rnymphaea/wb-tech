@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
+	"strings"
 )
 
 const debugPrefix = "[DEBUG]"
@@ -44,10 +46,32 @@ func main() {
 
 	flag.Parse()
 
+	var pattern string
+
+	if len(flag.Args()) == 0 {
+		fmt.Println("no pattern provided")
+		return
+	} else {
+		pattern = flag.Args()[0]
+	}
+
+	if opts.ignoreCase {
+		pattern = strings.ToLower(pattern)
+	}
+
 	if debug {
 		log.SetFlags(0)
 		log.Println("Debug mode started")
 		log.Printf("Options: %#v\n", opts)
+		log.Printf("Pattern: \"%s\"\n", pattern)
+	}
+
+	if !opts.strict {
+		expr, err := regexp.Compile(pattern)
+		if err != nil {
+			fmt.Println("error: ", err)
+			return
+		}
 	}
 
 	var input io.Reader
@@ -78,6 +102,7 @@ func main() {
 			log.Println(v)
 		}
 	}
+
 }
 
 func readlines(r io.Reader) ([]string, error) {
