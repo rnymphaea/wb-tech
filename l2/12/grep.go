@@ -57,6 +57,7 @@ func main() {
 
 	if opts.ignoreCase {
 		pattern = strings.ToLower(pattern)
+		pattern = "(?i)" + pattern
 	}
 
 	if debug {
@@ -66,10 +67,15 @@ func main() {
 		log.Printf("Pattern: \"%s\"\n", pattern)
 	}
 
+	var (
+		re         *regexp.Regexp
+		reParseErr error
+	)
+
 	if !opts.strict {
-		expr, err := regexp.Compile(pattern)
-		if err != nil {
-			fmt.Println("error: ", err)
+		re, reParseErr = regexp.Compile(pattern)
+		if reParseErr != nil {
+			fmt.Println("error: ", reParseErr)
 			return
 		}
 	}
@@ -87,7 +93,7 @@ func main() {
 
 		input = file
 	} else {
-		fmt.Printf("Enter the text: ")
+		fmt.Printf("Enter the text (Ctrl + D to stop): ")
 		input = os.Stdin
 	}
 
@@ -103,6 +109,20 @@ func main() {
 		}
 	}
 
+	var res []bool
+
+	if opts.strict {
+		res = grepStrict(lines, pattern, opts.invert)
+	} else {
+		res = grepRE(lines, re, opts.invert)
+	}
+
+	fmt.Println("Result: ")
+	for i, v := range res {
+		if v {
+			fmt.Println(lines[i])
+		}
+	}
 }
 
 func readlines(r io.Reader) ([]string, error) {
@@ -115,4 +135,32 @@ func readlines(r io.Reader) ([]string, error) {
 	}
 
 	return lines, scanner.Err()
+}
+
+func grepRE(lines []string, re *regexp.Regexp, invert bool) []bool {
+	matches := make([]bool, len(lines))
+
+	for i, v := range lines {
+		matches[i] = re.MatchString(v)
+
+		if invert {
+			matches[i] = !matches[i]
+		}
+	}
+
+	return matches
+}
+
+func grepStrict(lines []string, pattern string, invert bool) []bool {
+	matches := make([]bool, len(lines))
+
+	for i, v := range lines {
+		matches[i] = strings.Contains(v, pattern)
+
+		if invert {
+			matches[i] = !matches[i]
+		}
+	}
+
+	return matches
 }
