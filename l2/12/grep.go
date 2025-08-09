@@ -157,7 +157,7 @@ func main() {
 			}
 		}
 
-		fmt.Println("Number of occurences:", count)
+		fmt.Println("Number of occurrences:", count)
 		return
 	}
 
