@@ -11,7 +11,10 @@ import (
 	"strings"
 )
 
-const debugPrefix = "[DEBUG]"
+const (
+	debugPrefix = "[DEBUG]"
+	maxStrings  = 50
+)
 
 var (
 	debug    bool
@@ -55,9 +58,31 @@ func main() {
 		pattern = flag.Args()[0]
 	}
 
+	if opts.after < 0 {
+		fmt.Println("invalid num lines. Using default (0)")
+		opts.after = 0
+	}
+
+	if opts.before < 0 {
+		fmt.Println("invalid num lines. Using default (0)")
+		opts.before = 0
+	}
+
+	if opts.context < 0 {
+		fmt.Println("invalid num lines. Using default (0)")
+		opts.context = 0
+	}
+
+	if opts.context > 0 {
+		opts.after = opts.context
+		opts.before = opts.context
+	}
+
 	if opts.ignoreCase {
 		pattern = strings.ToLower(pattern)
-		pattern = "(?i)" + pattern
+		if !opts.strict {
+			pattern = "(?i)" + pattern
+		}
 	}
 
 	if debug {
@@ -75,7 +100,7 @@ func main() {
 	if !opts.strict {
 		re, reParseErr = regexp.Compile(pattern)
 		if reParseErr != nil {
-			fmt.Println("error: ", reParseErr)
+			fmt.Println("error:", reParseErr)
 			return
 		}
 	}
@@ -85,7 +110,7 @@ func main() {
 	if len(filepath) > 0 {
 		file, err := os.Open(filepath)
 		if err != nil {
-			fmt.Println("error: ", err)
+			fmt.Println("error:", err)
 			return
 		}
 
@@ -99,28 +124,47 @@ func main() {
 
 	lines, err := readlines(input)
 	if err != nil {
-		fmt.Println("error: ", err)
+		fmt.Println("error:", err)
 	}
 
 	if debug {
-		log.Printf("%s lines: ", debugPrefix)
-		for _, v := range lines {
+		log.Printf("\n%s lines: ", debugPrefix)
+		for i, v := range lines {
+			if i == maxStrings && maxStrings != len(lines)-1 {
+				log.Printf("... and %d line(-s) more\n", len(lines)-maxStrings-1)
+				break
+			}
+
 			log.Println(v)
 		}
+
+		log.Println()
 	}
 
 	var res []bool
 
-	if opts.strict {
-		res = grepStrict(lines, pattern, opts.invert)
-	} else {
+	if !opts.strict {
 		res = grepRE(lines, re, opts.invert)
+	} else {
+		res = grepStrict(lines, pattern, opts.ignoreCase, opts.invert)
+	}
+
+	var count int
+	if opts.count {
+		for _, v := range res {
+			if v {
+				count++
+			}
+		}
+
+		fmt.Println("Number of occurences:", count)
+		return
 	}
 
 	fmt.Println("Result: ")
 	for i, v := range res {
 		if v {
-			fmt.Println(lines[i])
+			printline(lines, i, opts.before, opts.after, opts.printIndex)
 		}
 	}
 }
@@ -151,11 +195,16 @@ func grepRE(lines []string, re *regexp.Regexp, invert bool) []bool {
 	return matches
 }
 
-func grepStrict(lines []string, pattern string, invert bool) []bool {
+func grepStrict(lines []string, pattern string, ignoreCase, invert bool) []bool {
 	matches := make([]bool, len(lines))
 
 	for i, v := range lines {
-		matches[i] = strings.Contains(v, pattern)
+		str := v
+		if ignoreCase {
+			str = strings.ToLower(str)
+		}
+
+		matches[i] = strings.Contains(str, pattern)
 
 		if invert {
 			matches[i] = !matches[i]
@@ -163,4 +212,27 @@ func grepStrict(lines []string, pattern string, invert bool) []bool {
 	}
 
 	return matches
+}
+
+func printline(lines []string, target, before, after int, printIndex bool) {
+	start := target - before
+	if start < 0 {
+		start = 0
+	}
+
+	end := target + after + 1
+	if end > len(lines) {
+		end = len(lines)
+	}
+
+	for i := start; i < end; i++ {
+		if (start != target || end != target+1) && i == target {
+			fmt.Printf("---> ")
+		}
+		if printIndex {
+			fmt.Printf("%d. ", i+1)
+		}
+		fmt.Println(lines[i])
+	}
+
 }
