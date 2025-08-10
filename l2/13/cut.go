@@ -86,10 +86,14 @@ func getFields(f string) ([]int, error) {
 		if len(values) == 1 {
 			field, err := strconv.Atoi(values[0])
 			if err != nil {
-				return nil, fmt.Errorf("invalid field: %s", field)
+				return nil, fmt.Errorf("invalid field: %s", values[0])
 			}
 
 			field -= 1
+
+			if field < 0 {
+				return nil, fmt.Errorf("invalid field (<= 0): %s", values[0])
+			}
 
 			fields = append(fields, field)
 		} else if len(values) == 2 {
