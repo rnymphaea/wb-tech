@@ -151,3 +151,187 @@ func TestGetFields(t *testing.T) {
 		})
 	}
 }
+
+func TestCut(t *testing.T) {
+	tests := []struct {
+		name  string
+		lines []string
+		opts  options
+		want  []string
+	}{
+		{
+			name:  "basic field selection",
+			lines: []string{"a:b:c", "d:e:f"},
+			opts: options{
+				fields:          []int{1},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   false,
+			},
+			want: []string{"b", "e"},
+		},
+		{
+			name:  "multiple fields",
+			lines: []string{"1,2,3,4", "a,b,c,d"},
+			opts: options{
+				fields:          []int{0, 2},
+				inputDelimeter:  ",",
+				outputDelimeter: "-",
+				separatedOnly:   false,
+			},
+			want: []string{"1-3", "a-c"},
+		},
+		{
+			name:  "separated only without delimiter",
+			lines: []string{"no delimeter", "has:delimiter"},
+			opts: options{
+				fields:          []int{0},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   true,
+			},
+			want: []string{"has"},
+		},
+		{
+			name:  "separated only with delimiter",
+			lines: []string{"skip:me", "keep:me"},
+			opts: options{
+				fields:          nil,
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   true,
+			},
+			want: []string{"skip:me", "keep:me"},
+		},
+		{
+			name:  "no fields specified",
+			lines: []string{"a:b:c", "d:e:f"},
+			opts: options{
+				fields:          nil,
+				inputDelimeter:  ":",
+				outputDelimeter: "-",
+				separatedOnly:   false,
+			},
+			want: []string{"a-b-c", "d-e-f"},
+		},
+		{
+			name:  "field out of range",
+			lines: []string{"one:two", "three:four"},
+			opts: options{
+				fields:          []int{5},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   false,
+			},
+			want: []string{"", ""},
+		},
+		{
+			name:  "mixed existing and non-existing fields",
+			lines: []string{"a:b:c", "d:e:f"},
+			opts: options{
+				fields:          []int{0, 5, 2},
+				inputDelimeter:  ":",
+				outputDelimeter: "-",
+				separatedOnly:   false,
+			},
+			want: []string{"a-c", "d-f"},
+		},
+		{
+			name:  "different input/output delimiters",
+			lines: []string{"a,b,c", "d,e,f"},
+			opts: options{
+				fields:          []int{0, 2},
+				inputDelimeter:  ",",
+				outputDelimeter: "|",
+				separatedOnly:   false,
+			},
+			want: []string{"a|c", "d|f"},
+		},
+		{
+			name:  "single field with no delimiter",
+			lines: []string{"no delimeter", "has,comma"},
+			opts: options{
+				fields:          []int{0},
+				inputDelimeter:  ",",
+				outputDelimeter: ",",
+				separatedOnly:   false,
+			},
+			want: []string{"no delimeter", "has"},
+		},
+		{
+			name:  "empty lines handling",
+			lines: []string{"", "a:b", "", "c:d"},
+			opts: options{
+				fields:          []int{0},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   false,
+			},
+			want: []string{"", "a", "", "c"},
+		},
+		{
+			name:  "fields in reverse order",
+			lines: []string{"a:b:c:d", "e:f:g:h"},
+			opts: options{
+				fields:          []int{3, 1},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   false,
+			},
+			want: []string{"d:b", "h:f"},
+		},
+		{
+			name:  "separated only with empty fields",
+			lines: []string{":", "a:", ":b", "a:b"},
+			opts: options{
+				fields:          []int{0, 1},
+				inputDelimeter:  ":",
+				outputDelimeter: "-",
+				separatedOnly:   true,
+			},
+			want: []string{"-", "a-", "-b", "a-b"},
+		},
+		{
+			name:  "multiple character delimiters",
+			lines: []string{"a||b||c", "d||e||f"},
+			opts: options{
+				fields:          []int{1},
+				inputDelimeter:  "||",
+				outputDelimeter: "--",
+				separatedOnly:   false,
+			},
+			want: []string{"b", "e"},
+		},
+		{
+			name:  "no fields with separated only",
+			lines: []string{"nodlm", "has:dlm"},
+			opts: options{
+				fields:          []int{0},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   true,
+			},
+			want: []string{"has"},
+		},
+		{
+			name:  "all fields out of range",
+			lines: []string{"a:b", "c:d"},
+			opts: options{
+				fields:          []int{5, 6},
+				inputDelimeter:  ":",
+				outputDelimeter: ":",
+				separatedOnly:   false,
+			},
+			want: []string{"", ""},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := cut(tt.lines, tt.opts)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("cut() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

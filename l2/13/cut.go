@@ -1,3 +1,5 @@
+// TODO: add logging
+
 package main
 
 import (
@@ -6,12 +8,15 @@ import (
 	"fmt"
 	"io"
 	"log"
-	_ "os"
+	"os"
 	"strconv"
 	"strings"
 )
 
-const debugPrefix = "[DEBUG]"
+const (
+	debugPrefix = "[DEBUG]"
+	maxStrings  = 50
+)
 
 var (
 	debug    bool
@@ -19,10 +24,10 @@ var (
 )
 
 type options struct {
-	fields        []int
-	all           bool
-	delimeter     string
-	onlySeparated bool
+	fields          []int
+	inputDelimeter  string
+	outputDelimeter string
+	separatedOnly   bool
 }
 
 func main() {
@@ -34,8 +39,10 @@ func main() {
 	)
 
 	flag.StringVar(&fieldsStr, "f", "", "specify the fields for printing")
-	flag.StringVar(&opts.delimeter, "d", "\t", "specify fields delimeter")
-	flag.BoolVar(&opts.onlySeparated, "s", false, "do not print lines that do not contain the field separator character")
+	flag.StringVar(&opts.inputDelimeter, "d", "\t", "specify input fields delimeter")
+	flag.StringVar(&opts.outputDelimeter, "output-delimeter", "\t", "specify output fields delimeter")
+
+	flag.BoolVar(&opts.separatedOnly, "s", false, "do not print lines that do not contain the field separator character")
 
 	flag.StringVar(&filepath, "file", "", "specify file")
 
@@ -46,9 +53,7 @@ func main() {
 		log.Println("Debug mode started")
 	}
 
-	if len(fieldsStr) == 0 {
-		opts.all = true
-	} else {
+	if len(fieldsStr) != 0 {
 		fields, err := getFields(fieldsStr)
 		if err != nil {
 			fmt.Println("error:", err)
@@ -61,6 +66,49 @@ func main() {
 	if debug {
 		log.Printf("%s options: %#v\n", debugPrefix, opts)
 	}
+
+	var input io.Reader
+
+	if len(filepath) > 0 {
+		file, err := os.Open(filepath)
+		if err != nil {
+			fmt.Println("error:", err)
+			return
+		}
+
+		defer file.Close()
+
+		input = file
+	} else {
+		fmt.Printf("Enter the text (Ctrl + D to stop): ")
+		input = os.Stdin
+	}
+
+	lines, err := readlines(input)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	if debug {
+		log.Printf("\n%s lines: ", debugPrefix)
+		for i, v := range lines {
+			if i == maxStrings && maxStrings != len(lines)-1 {
+				log.Printf("... and %d line(-s) more\n", len(lines)-maxStrings-1)
+				break
+			}
+
+			log.Println(v)
+		}
+
+		log.Println()
+	}
+
+	res := cut(lines, opts)
+
+	for _, v := range res {
+		fmt.Println(v)
+	}
+
 }
 
 func readlines(r io.Reader) ([]string, error) {
@@ -127,4 +175,37 @@ func getFields(f string) ([]int, error) {
 	}
 
 	return fields, nil
+}
+
+func cut(lines []string, opts options) []string {
+	res := make([]string, 0, len(lines))
+
+	for _, v := range lines {
+		fields := strings.Split(v, opts.inputDelimeter)
+
+		if len(fields) == 1 {
+			if !opts.separatedOnly {
+				res = append(res, fields[0])
+			}
+		} else {
+			targetFields := make([]string, 0, len(fields))
+
+			if opts.fields == nil {
+				targetFields = fields
+			} else {
+				for _, v := range opts.fields {
+					if v >= len(fields) {
+						continue
+					} else {
+						targetFields = append(targetFields, fields[v])
+					}
+				}
+			}
+
+			line := strings.Join(targetFields, opts.outputDelimeter)
+			res = append(res, line)
+		}
+	}
+
+	return res
 }
