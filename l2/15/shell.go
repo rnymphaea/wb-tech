@@ -17,6 +17,11 @@ type command struct {
 	prev   *command
 }
 
+type sequence struct {
+	commands []command
+	pipe     bool
+}
+
 func main() {
 	sigIntChan := make(chan os.Signal)
 	signal.Notify(sigIntChan, syscall.SIGINT)
@@ -49,12 +54,16 @@ func main() {
 			continue
 		}
 
-		cmds := parse(input)
+		seq := parse(input)
+		if seq.pipe {
+			seq.executePipeLine(sigIntChan)
+		}
 	}
 }
 
-func parse(input string) []command {
+func parse(input string) sequence {
 	fields := strings.Fields(input)
+	var seq sequence
 
 	cmds := make([]command, 0)
 	cmd := command{}
@@ -78,7 +87,7 @@ func parse(input string) []command {
 			cmds = append(cmds, cmd)
 			cmd = command{}
 			if len(cmds) > 0 {
-				cmd.prev = &cmds[len(cmds)-1]
+				seq.pipe = true
 			}
 			ind++
 			break
@@ -89,5 +98,13 @@ func parse(input string) []command {
 	}
 
 	cmds = append(cmds, cmd)
-	return cmds
+
+	seq.commands = cmds
+	return seq
+}
+
+func (s *sequence) executePipeLine(stop <-chan os.Signal) int {
+	var status int
+
+	return status
 }
